@@ -1,0 +1,631 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1730">
+<title>MALI-BABA — Le marché africain</title>
+<meta name="description" content="Achetez, vendez et discutez avec les vendeurs sur MALI-BABA, le marché en ligne africain.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --navy:#0b1730;
+  --blue:#2458db;
+  --pale:#edf3ff;
+  --ink:#18243b;
+  --muted:#68758a;
+  --line:#e5eaf2;
+  --white:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#f7f9fd}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+header{background:var(--navy);color:white;padding:17px 5%;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-size:25px;font-weight:900;letter-spacing:-1px}
+.brand span{color:#8eb4ff}
+.tagline{font-size:12px;color:#b8c9e8;margin-top:4px}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700}
+.btn-primary{background:var(--blue);color:white}
+.btn-light{background:white;color:var(--navy)}
+.btn-outline{background:transparent;border:1px solid #ccd7ea;color:inherit}
+main{max-width:1180px;margin:auto;padding:24px 18px 60px}
+.hero{background:linear-gradient(120deg,#0b1730,#193b76);color:white;padding:32px;border-radius:22px;display:grid;grid-template-columns:1.4fr 1fr;gap:25px;align-items:center}
+.hero h1{font-size:clamp(30px,5vw,48px);line-height:1.08;letter-spacing:-1.6px;margin:12px 0}
+.hero p{color:#cfdbef;line-height:1.7}
+.hero-art{font-size:100px;text-align:center}
+.eyebrow{color:#9cbdff;font-size:12px;font-weight:800;letter-spacing:2px}
+.searchbar{display:flex;gap:9px;margin-top:22px}
+.searchbar input{min-width:0;flex:1}
+input,textarea,select{width:100%;padding:12px 13px;border:1px solid #dce3ee;border-radius:10px;background:white;color:var(--ink)}
+input:focus,textarea:focus,select:focus{outline:2px solid #b7ceff;border-color:#7ca5ff}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 15px}
+.section-head h2{margin:0;font-size:23px}
+.muted{color:var(--muted);font-size:14px}
+.categories{display:flex;gap:9px;overflow-x:auto;padding:3px 0 12px}
+.chip{white-space:nowrap;background:white;border:1px solid var(--line);border-radius:30px;padding:10px 15px;color:var(--ink)}
+.chip.active{background:var(--navy);color:white}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.card{background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0}
+.product-img{height:190px;background:#eaf0fc;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.product-img img{width:100%;height:100%;object-fit:cover}
+.placeholder{font-size:58px}
+.card-content{padding:15px}
+.card h3{margin:8px 0;font-size:17px;overflow-wrap:anywhere}
+.price{font-size:21px;font-weight:850;color:var(--blue)}
+.card .muted{margin:7px 0}
+.card-actions{display:flex;gap:8px;margin-top:13px}
+.card-actions button{flex:1}
+.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:22px}
+.panel h2{margin-top:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.field{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700}
+.full{grid-column:1/-1}
+.status{padding:12px 14px;border-radius:10px;background:var(--pale);margin:14px 0;font-size:14px;overflow-wrap:anywhere}
+.hidden{display:none!important}
+.auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chat-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;min-height:350px}
+.chat-list{border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:440px}
+.chat-person{display:block;width:100%;text-align:left;padding:13px;border:0;border-bottom:1px solid var(--line);background:white}
+.chat-person.active{background:var(--pale)}
+.chat-main{border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-width:0;min-height:350px}
+.chat-title{padding:13px;border-bottom:1px solid var(--line);font-weight:800}
+.messages{padding:14px;display:flex;flex-direction:column;gap:10px;flex:1;min-height:200px;max-height:350px;overflow:auto}
+.bubble{max-width:85%;padding:10px 13px;border-radius:13px;background:#edf1f8;overflow-wrap:anywhere;white-space:pre-wrap}
+.bubble.mine{align-self:flex-end;background:#dce8ff}
+.bubble small{display:block;margin-top:5px;font-size:10px;color:var(--muted)}
+.send-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.send-row input{min-width:0}
+footer{text-align:center;color:var(--muted);padding:30px 15px;font-size:13px}
+@media(max-width:760px){
+ .hero{grid-template-columns:1fr;padding:24px}.hero-art{display:none}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .product-img{height:145px}
+ .chat-layout{grid-template-columns:1fr}
+ .chat-list{max-height:190px}
+}
+@media(max-width:420px){
+ header{padding:15px}.grid{grid-template-columns:1fr}
+ .product-img{height:210px}
+ .form-grid,.auth-grid{grid-template-columns:1fr}
+ .full{grid-column:auto}
+ .searchbar{flex-wrap:wrap}
+ .searchbar button{width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">MALI-<span>BABA</span></div>
+    <div class="tagline">Le marché africain, à portée de main.</div>
+  </div>
+  <nav>
+    <button class="btn btn-light" onclick="goTo('products')">Explorer</button>
+    <button class="btn btn-light" onclick="goTo('publish')">Vendre</button>
+    <button class="btn btn-outline" style="color:white;border-color:#526487" onclick="goTo('inbox')">Messages</button>
+    <button id="authButton" class="btn btn-primary" onclick="goTo('account')">Connexion</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">ACHETER • VENDRE • ÉCHANGER</div>
+      <h1>Les bonnes affaires<br>commencent ici.</h1>
+      <p>Découvrez des produits, rencontrez des vendeurs et négociez directement avec eux, partout en Afrique.</p>
+      <div class="searchbar">
+        <input id="searchInput" placeholder="Que recherchez-vous ?" aria-label="Rechercher un produit">
+        <button class="btn btn-primary" onclick="loadListings()">Rechercher</button>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">🛍️</div>
+  </section>
+
+  <section id="products">
+    <div class="section-head">
+      <h2>Explorez les annonces</h2>
+      <span id="listingCount" class="muted">Chargement…</span>
+    </div>
+    <div class="categories" id="categories"></div>
+    <div id="listingStatus" class="status">Connexion à la marketplace…</div>
+    <div id="listingGrid" class="grid"></div>
+  </section>
+
+  <section id="account" class="panel">
+    <h2>Votre compte</h2>
+    <p class="muted">Connectez-vous pour publier une annonce ou discuter avec un vendeur.</p>
+    <div id="accountStatus" class="status">Vous n'êtes pas connecté.</div>
+    <div id="authForms">
+      <div class="auth-grid">
+        <button class="btn btn-primary" onclick="setAuthMode('signup')">Créer un compte</button>
+        <button class="btn btn-outline" onclick="setAuthMode('login')">J'ai déjà un compte</button>
+      </div>
+      <form id="authForm" class="form-grid" style="margin-top:15px">
+        <label id="nameWrap" class="field">Nom affiché
+          <input id="displayName" maxlength="60" placeholder="Ex. Amadou Traoré">
+        </label>
+        <label class="field full">Adresse e-mail
+          <input id="email" type="email" required autocomplete="email" placeholder="vous@exemple.com">
+        </label>
+        <label class="field full">Mot de passe
+          <input id="password" type="password" required minlength="8" autocomplete="current-password" placeholder="Au moins 8 caractères">
+        </label>
+        <button id="authSubmit" class="btn btn-primary full" type="submit">Créer mon compte</button>
+      </form>
+      <p class="muted">Utilisez une adresse e-mail à laquelle vous avez accès. Si la confirmation e-mail est activée, confirmez votre inscription avant de vous connecter.</p>
+    </div>
+    <button id="logoutButton" class="btn btn-outline hidden" onclick="logout()">Se déconnecter</button>
+  </section>
+
+  <section id="publish" class="panel">
+    <h2>Publier un produit</h2>
+    <p class="muted">Ajoutez une annonce pour la rendre visible aux acheteurs.</p>
+    <form id="listingForm" class="form-grid">
+      <label class="field full">Nom du produit
+        <input id="productTitle" maxlength="100" required placeholder="Ex. Téléphone Samsung Galaxy">
+      </label>
+      <label class="field">Prix
+        <input id="productPrice" type="number" min="0" step="0.01" required placeholder="Ex. 75000">
+      </label>
+      <label class="field">Devise
+        <select id="currency">
+          <option value="XOF">FCFA (XOF)</option>
+          <option value="XAF">FCFA (XAF)</option>
+          <option value="MAD">Dirham marocain (MAD)</option>
+          <option value="NGN">Naira nigérian (NGN)</option>
+          <option value="GHS">Cedi ghanéen (GHS)</option>
+          <option value="KES">Shilling kényan (KES)</option>
+          <option value="USD">Dollar américain (USD)</option>
+        </select>
+      </label>
+      <label class="field">Pays
+        <select id="country" required>
+          <option value="">Choisir un pays</option>
+          <option>Mali</option><option>Sénégal</option><option>Côte d’Ivoire</option>
+          <option>Burkina Faso</option><option>Niger</option><option>Guinée</option>
+          <option>Bénin</option><option>Togo</option><option>Ghana</option>
+          <option>Nigeria</option><option>Maroc</option><option>Algérie</option>
+          <option>Tunisie</option><option>Cameroun</option><option>Tchad</option>
+          <option>Kenya</option><option>Afrique du Sud</option><option>Autre</option>
+        </select>
+      </label>
+      <label class="field">Catégorie
+        <select id="category" required>
+          <option value="">Choisir</option>
+          <option>Électronique</option><option>Téléphones</option>
+          <option>Mode</option><option>Maison</option><option>Véhicules</option>
+          <option>Immobilier</option><option>Informatique</option>
+          <option>Beauté</option><option>Agriculture</option><option>Autres</option>
+        </select>
+      </label>
+      <label class="field full">Lien de la photo (facultatif)
+        <input id="imageUrl" type="url" placeholder="https://exemple.com/ma-photo.jpg">
+      </label>
+      <label class="field full">Description
+        <textarea id="productDescription" rows="4" maxlength="3000" required placeholder="Décrivez l'état, les caractéristiques et les modalités de livraison…"></textarea>
+      </label>
+      <button class="btn btn-primary full" type="submit">Publier mon annonce</button>
+    </form>
+    <div id="publishStatus" class="status hidden"></div>
+  </section>
+
+  <section id="inbox" class="panel">
+    <h2>Messagerie privée</h2>
+    <p class="muted">Retrouvez vos conversations avec les acheteurs et les vendeurs.</p>
+    <div id="chatStatus" class="status">Connectez-vous pour accéder à vos messages.</div>
+    <div id="chatLayout" class="chat-layout hidden">
+      <div id="chatList" class="chat-list"></div>
+      <div class="chat-main">
+        <div id="chatTitle" class="chat-title">Choisissez une conversation</div>
+        <div id="messages" class="messages">
+          <p class="muted">Vos messages apparaîtront ici.</p>
+        </div>
+        <form id="sendForm" class="send-row">
+          <input id="messageInput" maxlength="2000" autocomplete="off" required placeholder="Écrire un message…">
+          <button class="btn btn-primary" type="submit">Envoyer</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <strong>MALI-BABA</strong> · Une marketplace pour l'Afrique.<br>
+  Achetez prudemment. Vérifiez le produit et le vendeur avant tout paiement.
+</footer>
+
+<script>
+const SUPABASE_URL = "TON_URL_SUPABASE";
+const SUPABASE_KEY = "TA_CLE_PUBLIQUE_SUPABASE";
+
+const configured =
+  SUPABASE_URL.startsWith("https://") &&
+  !SUPABASE_URL.includes("TON_URL") &&
+  SUPABASE_KEY.length > 20 &&
+  !SUPABASE_KEY.includes("TA_CLE");
+
+const db = configured
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+let currentUser = null;
+let authMode = "signup";
+let activeCategory = "Toutes";
+let activeConversation = null;
+let messageChannel = null;
+let listingsCache = [];
+
+const categories = [
+  "Toutes","Électronique","Téléphones","Mode","Maison","Véhicules",
+  "Immobilier","Informatique","Beauté","Agriculture","Autres"
+];
+
+const $ = id => document.getElementById(id);
+const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+
+function status(id, text) {
+  $(id).textContent = text;
+  $(id).classList.remove("hidden");
+}
+
+function goTo(id) {
+  $(id).scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  $("nameWrap").classList.toggle("hidden", mode !== "signup");
+  $("displayName").required = mode === "signup";
+  $("authSubmit").textContent = mode === "signup"
+    ? "Créer mon compte" : "Me connecter";
+  $("password").autocomplete = mode === "signup"
+    ? "new-password" : "current-password";
+}
+
+function renderCategories() {
+  $("categories").innerHTML = categories.map(c =>
+    `<button class="chip ${c===activeCategory?"active":""}"
+      onclick="chooseCategory('${c}')">${escapeHTML(c)}</button>`
+  ).join("");
+}
+
+function chooseCategory(category) {
+  activeCategory = category;
+  renderCategories();
+  loadListings();
+}
+
+function formatPrice(price, currency) {
+  try {
+    return new Intl.NumberFormat("fr-FR",{
+      maximumFractionDigits:2
+    }).format(Number(price)) + " " + currency;
+  } catch {
+    return price + " " + currency;
+  }
+}
+
+function renderListings(rows) {
+  $("listingCount").textContent = rows.length + " annonce(s)";
+  if (!rows.length) {
+    $("listingGrid").innerHTML = "";
+    status("listingStatus","Aucune annonce trouvée. Essayez une autre recherche ou publiez le premier produit.");
+    return;
+  }
+  $("listingStatus").classList.add("hidden");
+  $("listingGrid").innerHTML = rows.map(p => {
+    const image = p.image_url && /^https?:\/\//i.test(p.image_url);
+    return `<article class="card">
+      <div class="product-img">
+        ${image
+          ? `<img loading="lazy" src="${escapeHTML(p.image_url)}" alt="${escapeHTML(p.title)}" onerror="this.outerHTML='<div class=&quot;placeholder&quot;>🛍️</div>'">`
+          : `<div class="placeholder">🛍️</div>`}
+      </div>
+      <div class="card-content">
+        <div class="muted">${escapeHTML(p.category)} · ${escapeHTML(p.country)}</div>
+        <h3>${escapeHTML(p.title)}</h3>
+        <div class="price">${escapeHTML(formatPrice(p.price,p.currency))}</div>
+        <p class="muted">${escapeHTML(p.description.slice(0,115))}${p.description.length>115?"…":""}</p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="contactSeller('${p.id}')">Contacter</button>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+async function loadListings() {
+  if (!db) {
+    status("listingStatus","Configure d'abord l'URL et la clé publique Supabase dans index.html.");
+    $("listingCount").textContent = "Configuration requise";
+    return;
+  }
+  $("listingStatus").classList.remove("hidden");
+  $("listingStatus").textContent = "Chargement des annonces…";
+  let query = db.from("listings").select("*").order("created_at",{ascending:false}).limit(100);
+  if (activeCategory !== "Toutes") query = query.eq("category",activeCategory);
+  const search = $("searchInput").value.trim();
+  if (search) query = query.or(`title.ilike.%${search.replace(/[%_,]/g," ")}%,description.ilike.%${search.replace(/[%_,]/g," ")}%`);
+  const {data,error} = await query;
+  if (error) {
+    status("listingStatus","Erreur de chargement : "+error.message);
+    return;
+  }
+  listingsCache = data || [];
+  renderListings(listingsCache);
+}
+
+async function refreshUser() {
+  if (!db) {
+    $("accountStatus").textContent = "Ajoute d'abord les identifiants Supabase dans le code.";
+    return;
+  }
+  const {data,error} = await db.auth.getUser();
+  if (error) console.error(error);
+  currentUser = data?.user || null;
+  $("authButton").textContent = currentUser ? "Mon compte" : "Connexion";
+  $("authForms").classList.toggle("hidden",!!currentUser);
+  $("logoutButton").classList.toggle("hidden",!currentUser);
+  $("accountStatus").textContent = currentUser
+    ? "Connecté : "+currentUser.email
+    : "Vous n'êtes pas connecté.";
+  $("chatLayout").classList.toggle("hidden",!currentUser);
+  $("chatStatus").textContent = currentUser
+    ? "Vos conversations privées."
+    : "Connectez-vous pour accéder à vos messages.";
+  if (currentUser) await loadConversations();
+}
+
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if (!db) return alert("Configure d'abord Supabase dans le code.");
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const name = $("displayName").value.trim();
+  $("authSubmit").disabled = true;
+  try {
+    if (authMode === "signup") {
+      const {data,error} = await db.auth.signUp({
+        email,password,
+        options:{data:{display_name:name}}
+      });
+      if (error) throw error;
+      if (data.session) {
+        alert("Compte créé et connecté !");
+      } else {
+        alert("Inscription enregistrée. Consulte tes e-mails pour confirmer le compte si demandé, puis connecte-toi.");
+        setAuthMode("login");
+      }
+    } else {
+      const {error} = await db.auth.signInWithPassword({email,password});
+      if (error) throw error;
+      alert("Connexion réussie !");
+    }
+    await refreshUser();
+  } catch(error) {
+    alert("Erreur : "+error.message);
+  } finally {
+    $("authSubmit").disabled = false;
+  }
+});
+
+async function logout() {
+  if (!db) return;
+  const {error} = await db.auth.signOut();
+  if (error) return alert(error.message);
+  activeConversation = null;
+  if (messageChannel) {
+    await db.removeChannel(messageChannel);
+    messageChannel = null;
+  }
+  $("chatList").innerHTML = "";
+  $("messages").innerHTML = "";
+  await refreshUser();
+}
+
+$("listingForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if (!db) return status("publishStatus","Configure d'abord Supabase.");
+  if (!currentUser) {
+    status("publishStatus","Connecte-toi avant de publier une annonce.");
+    goTo("account");
+    return;
+  }
+  const imageUrl = $("imageUrl").value.trim();
+  if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+    return status("publishStatus","Le lien de la photo doit commencer par https:// ou http://.");
+  }
+  const item = {
+    seller_id:currentUser.id,
+    title:$("productTitle").value.trim(),
+    description:$("productDescription").value.trim(),
+    price:Number($("productPrice").value),
+    currency:$("currency").value,
+    country:$("country").value,
+    category:$("category").value,
+    image_url:imageUrl || null
+  };
+  const button = e.submitter;
+  button.disabled = true;
+  try {
+    const {error} = await db.from("listings").insert(item);
+    if (error) throw error;
+    e.target.reset();
+    status("publishStatus","Annonce publiée avec succès !");
+    await loadListings();
+    goTo("products");
+  } catch(error) {
+    status("publishStatus","Publication impossible : "+error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+async function contactSeller(listingId) {
+  if (!db) return alert("Configure d'abord Supabase.");
+  if (!currentUser) {
+    alert("Connecte-toi pour contacter le vendeur.");
+    goTo("account");
+    return;
+  }
+  const item = listingsCache.find(p=>p.id===listingId);
+  if (!item) return;
+  if (item.seller_id===currentUser.id) {
+    return alert("C'est ta propre annonce !");
+  }
+  const {data:existing,error:findError} = await db
+    .from("conversations").select("id")
+    .eq("listing_id",listingId)
+    .eq("buyer_id",currentUser.id).maybeSingle();
+  if (findError) return alert("Erreur : "+findError.message);
+  let conversationId = existing?.id;
+  if (!conversationId) {
+    const {data,error} = await db.from("conversations")
+      .insert({
+        listing_id:listingId,
+        buyer_id:currentUser.id,
+        seller_id:item.seller_id
+      }).select("id").single();
+    if (error) {
+      if (error.code === "23505") {
+        const {data:again} = await db.from("conversations")
+          .select("id").eq("listing_id",listingId)
+          .eq("buyer_id",currentUser.id).maybeSingle();
+        conversationId = again?.id;
+      } else {
+        return alert("Impossible de créer la conversation : "+error.message);
+      }
+    } else conversationId = data.id;
+  }
+  if (conversationId) {
+    await loadConversations();
+    await openConversation(conversationId);
+    goTo("inbox");
+  }
+}
+
+async function loadConversations() {
+  if (!db || !currentUser) return;
+  const {data,error} = await db.from("conversations")
+    .select("id,listing_id,buyer_id,seller_id,created_at")
+    .order("created_at",{ascending:false});
+  if (error) {
+    status("chatStatus","Erreur de chargement des conversations : "+error.message);
+    return;
+  }
+  const rows = data || [];
+  if (!rows.length) {
+    $("chatList").innerHTML = '<p class="muted" style="padding:12px">Pas encore de conversation. Contactez un vendeur depuis une annonce.</p>';
+    return;
+  }
+  const ids = [...new Set(rows.map(c=>c.listing_id))];
+  const {data:listings} = await db.from("listings")
+    .select("id,title").in("id",ids);
+  const titleById = Object.fromEntries((listings||[]).map(p=>[p.id,p.title]));
+  $("chatList").innerHTML = rows.map(c=>{
+    const other = c.buyer_id===currentUser.id ? "Vendeur" : "Acheteur";
+    const title = titleById[c.listing_id] || "Annonce";
+    return `<button class="chat-person ${c.id===activeConversation?"active":""}"
+      onclick="openConversation('${c.id}')">
+      <strong>${escapeHTML(title)}</strong><br>
+      <span class="muted">${other} · Ouvrir la discussion</span>
+    </button>`;
+  }).join("");
+}
+
+async function openConversation(id) {
+  if (!db || !currentUser) return;
+  activeConversation = id;
+  await loadConversations();
+  const conv = await db.from("conversations")
+    .select("id,listing_id,buyer_id,seller_id")
+    .eq("id",id).single();
+  if (conv.error) return status("chatStatus","Impossible d'ouvrir cette conversation.");
+  const c = conv.data;
+  const listing = await db.from("listings")
+    .select("title").eq("id",c.listing_id).maybeSingle();
+  $("chatTitle").textContent = listing.data?.title || "Discussion privée";
+  await loadMessages();
+  if (messageChannel) await db.removeChannel(messageChannel);
+  messageChannel = db.channel("messages-"+id)
+    .on("postgres_changes",{
+      event:"INSERT",schema:"public",table:"messages",
+      filter:"conversation_id=eq."+id
+    },payload=>{
+      if (activeConversation===id) loadMessages();
+    }).subscribe();
+}
+
+async function loadMessages() {
+  if (!db || !activeConversation) return;
+  const {data,error} = await db.from("messages")
+    .select("id,sender_id,body,created_at")
+    .eq("conversation_id",activeConversation)
+    .order("created_at",{ascending:true}).limit(200);
+  if (error) {
+    status("chatStatus","Erreur de chargement des messages : "+error.message);
+    return;
+  }
+  $("messages").innerHTML = (data||[]).map(m=>{
+    const mine = m.sender_id===currentUser.id;
+    const time = new Date(m.created_at).toLocaleString("fr-FR",{
+      dateStyle:"short",timeStyle:"short"
+    });
+    return `<div class="bubble ${mine?"mine":""}">
+      ${escapeHTML(m.body)}
+      <small>${mine?"Vous": "Message"} · ${escapeHTML(time)}</small>
+    </div>`;
+  }).join("") || '<p class="muted">Début de la conversation. Envoyez votre premier message.</p>';
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+
+$("sendForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if (!db || !currentUser || !activeConversation) {
+    return alert("Choisissez une conversation avant d'envoyer un message.");
+  }
+  const body = $("messageInput").value.trim();
+  if (!body) return;
+  const sendButton = e.submitter;
+  sendButton.disabled = true;
+  try {
+    const {error} = await db.from("messages").insert({
+      conversation_id:activeConversation,
+      sender_id:currentUser.id,
+      body
+    });
+    if (error) throw error;
+    $("messageInput").value = "";
+    await loadMessages();
+  } catch(error) {
+    alert("Message non envoyé : "+error.message);
+  } finally {
+    sendButton.disabled = false;
+  }
+});
+
+async function init() {
+  renderCategories();
+  if (!db) {
+    status("listingStatus","Étape à terminer : ajoute l'URL et la clé publique de ton projet Supabase dans le code.");
+    status("accountStatus","Le site est prêt visuellement, mais la base de données n'est pas encore connectée.");
+    return;
+  }
+  db.auth.onAuthStateChange(()=> {
+    setTimeout(()=>refreshUser(),0);
+  });
+  await refreshUser();
+  await loadListings();
+}
+
+setAuthMode("signup");
+init();
+</script>
+</body>
+</html>
